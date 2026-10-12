@@ -1,0 +1,17 @@
+{
+  "extraKnownMarketplaces": {
+    "claude-code-skills": {
+      "source": {
+        "source": "github",
+        "repo": "alirezarezvani/claude-skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "engineering-advanced-skills@claude-code-skills": true,
+    "engineering-skills@claude-code-skills": true,
+    "write-a-skill@claude-code-skills": true,
+    "skill-doctor@claude-code-skills": true,
+    "agent-harness@claude-code-skills": true
+  }
+}
