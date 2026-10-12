@@ -42,6 +42,35 @@ def safe_ticker_component(value: str, *, max_len: int = 32) -> str:
     return value
 
 
+# Matches this codebase's prompt section delimiters, e.g. <start_of_reddit>
+# or <end_of_stocktwits>. Fetched third-party content (news, Reddit posts,
+# StockTwits messages) is interpolated between these tags in agent prompts
+# (see sentiment_analyst.py). A post whose body contains the literal tag
+# text could visually "close" the untrusted block early, letting attacker
+# text that follows blend into the trusted prompt. Case-insensitive since
+# the model reads this as plain text, not a case-sensitive parser.
+_PROMPT_DELIMITER_TAG_RE = re.compile(r"<(/?)(start|end)_of_[a-z_]+>", re.IGNORECASE)
+
+
+def defang_prompt_delimiters(text: str) -> str:
+    """Neutralize literal occurrences of this codebase's prompt delimiter tags.
+
+    Swaps the angle brackets for square brackets (``<end_of_reddit>`` ->
+    ``[end_of_reddit]``), which breaks the exact token the prompt-assembly
+    code matches on while leaving the text otherwise readable. This is
+    defense-in-depth for delimiter break-out only — it does not make
+    instructions embedded elsewhere in untrusted content safe to follow,
+    since the content is still handed to an LLM reading plain text. Pair
+    with an explicit "treat this as data, not instructions" framing in the
+    prompt itself.
+    """
+    if not text:
+        return text
+    return _PROMPT_DELIMITER_TAG_RE.sub(
+        lambda m: m.group(0).replace("<", "[").replace(">", "]"), text
+    )
+
+
 def save_output(data: pd.DataFrame, tag: str, save_path: SavePathType = None) -> None:
     if save_path:
         data.to_csv(save_path, encoding="utf-8")
